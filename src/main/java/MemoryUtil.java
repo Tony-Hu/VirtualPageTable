@@ -17,25 +17,26 @@ public class MemoryUtil {
   private Stack<Integer> availableFrames;
   private boolean showOutputInfo;
 
-  public MemoryUtil(int pages, int frames){
-    this.frames = frames;
-    this.pages = pages;
-    random = new Random(System.currentTimeMillis());//Random generator's seed is binding with system time.
-    virtualPageTableRegister = new VirtualPageTableNode[pages];
-    generateAvailableFrames();
-    generateSectorNumbers();
-  }
 
   public MemoryUtil(int pages, int frames, boolean showOutputInfo){
-    this(pages, frames);
     this.showOutputInfo = showOutputInfo;
+    this.frames = frames;
+    this.pages = pages;
+    availableFrames = new Stack<>();
+    random = new Random(System.currentTimeMillis());//Random generator's seed is binding with system time.
+    virtualPageTableRegister = new VirtualPageTableNode[pages];
+
+    generateAvailableFrames();
+    generateSectorNumbers();
+
+    showInitialInfo();
   }
 
   public void nextPC(){
     programCounter = random.nextInt(PAGE_SIZE * pages);
 
     if (showOutputInfo){
-      System.out.println("Generate new PC address as: " + programCounter);
+      System.out.println("Generate new PC address is: " + programCounter);
     }
   }
 
@@ -66,50 +67,45 @@ public class MemoryUtil {
     }
   }
 
-  private void calculatePhysicalAddress(){
+  public void executeInstruction(){
     int offset = programCounter % PAGE_SIZE;//Bit operation version: int offset = programCounter & (PAGE_SIZE - 1)
     int pageNumber = programCounter / PAGE_SIZE;
     int frameNumber = findFrameNumberInVPTR(pageNumber);
-    if (showOutputInfo){
-      displayVPTR();
-    }
     int physicalAddress = frameNumber * PAGE_SIZE + offset;
     if (showOutputInfo){
-      System.out.println("The physical address is: " + physicalAddress);
+      displayVPTR();
+      System.out.println("The page number is: " + pageNumber);
+      System.out.println("The offset is: " + offset);
+      System.out.println("The physical address is: " + frameNumber + " * " + PAGE_SIZE + " + " + offset + " = " + physicalAddress + "\n");
     }
-    //TODO - unfinished
-
   }
 
   //If found, already in RAM(main memory). Just return the frame number.
   //If not found, read the specified page from sector. Thus, it will create a page fault.
   //And, it may have to select a victim to be swiped out from RAM.
-  //TODO - which frame shall be selected as victim? FIFO? LRU? LFU? Random?
+  //Algorithm used: LFU.
   private int findFrameNumberInVPTR(int pageNumber){
     VirtualPageTableNode node = virtualPageTableRegister[pageNumber];
-
-
-    if (node.isValid()) {
+    if (node.isValid()) {//Already in RAM, no page fault.
       node.timeStampIncreaseOne();//LFU algorithm. If the page already in the frame, increase the time stamp by 1.
-      return node.getFrameNumber();
-    }
-
-    //If there still have free frames. No victim shall be selected.
-    if (!availableFrames.empty()){//Page fault occurred.
+    } else if (!availableFrames.empty()){//If there still have free frames. No victim shall be selected.
       node.setFrameNumber(availableFrames.pop());
       node.setValid(true);
       node.setTimeStampToOne();//LFU algorithm. If the page is newly swapped in, re-set the time stamp to 1.
 
-      if (showOutputInfo){
+      if (showOutputInfo){//Page fault occurred.
         System.out.println("Page fault occurred! ");
       }
-      return node.getFrameNumber();
+
+    } else {//If no free frames available. Select a victim page according to the LFU algorithm.
+      int victimPage = selectVictimPage();
+      swapTwoPages(pageNumber, victimPage);
+
+      if (showOutputInfo){//Page fault occurred.
+        System.out.println("Page fault occurred! ");
+      }
     }
-
-    //If no free frames available. Select a victim page according to the LFU algorithm.
-    int victimPage = selectVictimPage();
-    swapTwoPages(pageNumber, victimPage);
-
+    return node.getFrameNumber();
   }
 
   //Use LFU algorithm to select victim.
@@ -132,16 +128,38 @@ public class MemoryUtil {
     virtualPageTableRegister[victimPageNumber].setValid(false);
     virtualPageTableRegister[pageNumber].setFrameNumber(virtualPageTableRegister[victimPageNumber]);
     virtualPageTableRegister[pageNumber].setValid(true);
+    virtualPageTableRegister[pageNumber].setTimeStampToOne();
   }
 
 
   public void displayVPTR(){
-    System.out.println("VPTR");
-    System.out.println("P#\tF#\tV/I\tSec#\tTime stamp");
+    System.out.println("-----VPTR-----");
+    System.out.println("P#\tF#\t\tV/I\t\tSec#\tTime stamp");
     for (int i = 0; i < virtualPageTableRegister.length; i++){
       System.out.println(i + "\t" + virtualPageTableRegister[i]);
     }
   }
 
 
+  public void manuallySetProgramCounter(int logicalAddress){
+    programCounter = logicalAddress;
+    if (showOutputInfo){
+      System.out.println("Generate new PC address is: " + programCounter);
+    }
+  }
+
+  public void showInitialInfo(){
+    if (showOutputInfo){
+      System.out.println("A simulation for the program with " + pages + " pages and " + frames + " frames created successful!");
+      System.out.println("NOTE:Page size is: " + PAGE_SIZE);
+      System.out.println("Max sector numbers are: " + MAX_SECTORS);
+      System.out.println("Max frame numbers are: " + MAX_FRAMES);
+
+      System.out.println("The frames being allocated are: ");
+      for (int frame : availableFrames){
+        System.out.print(frame + "\t");
+      }
+      System.out.println("\n");
+    }
+  }
 }

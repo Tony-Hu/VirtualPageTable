@@ -6,16 +6,25 @@ import java.util.Random;
 public class MemoryUtilTest {
 
   @Test
-  void testRandom(){
-    Random random = new Random(System.currentTimeMillis());
-    for (int i = 0; i < 10; i++) {
-      System.out.println(random.nextInt(160));
+  void testPagesEqualToFrames(){
+    int pages = 3;
+    MemoryUtil memoryUtil = new MemoryUtil(pages, pages, true);
+
+    for (int i = 0; i < pages; i++){
+      memoryUtil.manuallySetProgramCounter(i * MemoryUtil.PAGE_SIZE);
+      memoryUtil.executeInstruction();
     }
   }
 
   @Test
-  void testShiftOperation(){
-    System.out.println((96 & 15));
+  void testSimpleLFUSelectVictim(){
+    int pages = 3;
+    MemoryUtil memoryUtil = new MemoryUtil(pages, 1, true);
+
+    for (int i = 0; i < pages; i++){
+      memoryUtil.manuallySetProgramCounter(i * MemoryUtil.PAGE_SIZE);
+      memoryUtil.executeInstruction();
+    }
   }
 
 }

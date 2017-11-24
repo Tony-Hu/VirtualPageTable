@@ -49,8 +49,8 @@ public class VirtualPageTableNode {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     if (isValid) {
-      sb.append(frameNumber).append("\t").append(isValid).append("\t")
-          .append(sectorNumber).append("\t").append(timeStamp).append("\n");
+      sb.append(frameNumber).append("\t\t").append(isValid).append("\t")
+          .append(sectorNumber).append("\t\t").append(timeStamp).append("\n");
     } else {// If not valid, ignore frame number, time stamp.
       sb.append("\t\t").append(isValid).append("\t")
           .append(sectorNumber).append("\t\n");
