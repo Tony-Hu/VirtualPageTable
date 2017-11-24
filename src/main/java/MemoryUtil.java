@@ -120,6 +120,7 @@ public class MemoryUtil {
         minimum = min;
       }
     }
+    System.out.println("The victim page is: " + minIndex);
     return minIndex;
   }
 
