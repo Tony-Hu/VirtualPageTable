@@ -75,6 +75,9 @@ public class MemoryUtilTest {
 
     memoryUtil.manuallySetProgramCounter( 3 * MemoryUtil.PAGE_SIZE);//Load page 3 into frame. page 0 shall be the victim.
     memoryUtil.executeInstruction();
+
+    memoryUtil.manuallySetProgramCounter(12);//Reload page 0, time stamp shall be reset to 1.
+    memoryUtil.executeInstruction();
   }
 
 }
