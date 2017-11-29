@@ -4,6 +4,7 @@ This is another operation system simulation. For the **virtual memory management
 PAGE SIZE = 16
 MAX SECTORs AVAILABLE = 1000
 MAX FRAMEs AVAILABE = 100
+(defined in src/java/MemoryUtil.java)
 
 Victim page selection algorithm: Least Frequently Used(LFU)
 ```
